@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+<script src="data.js"></script>
+<html>
+<body>
+
+<h1 id="entry"></h1>
+
+<button onclick="myDefinition()"><h1>Definition</h1></button>
+<button onclick="myShow()"><h1>Show</h1></button>
+<button onclick="myRepeat()"><h1>Repeat</h1></button>
+
+<h1 id="definition"></h1>
+<br><br><br><br><br>
+<button onclick="myWrong()"><h1 id="wrong">wrong</h1></button>
+<button onclick="myRight()"><h1 id="right">right</h1></button>
+<p></p>
+<br><br><br><br><br><br><br>
+
+<form>
+    <select id = "myList" onchange = "myOptions()" >
+    <option>Options:</option>
+    <option>Filter Day</option>
+    <option>Filter Rare</option>
+    <option>Flip</option>
+    <option>Vocab</option>
+    <option>Grammar</option>
+    <option>Voice</option>
+    <option>Text</option>
+    <option>Top Words</option>
+    </select>   
+    </form>
+
+
+<script>
+document.getElementById("wrong").style.color = 'red';
+document.getElementById("right").style.color = 'green';
+
+let Voice_on = true;
+let Txt_on   = true;
+let current_utc = Date.now();
+let index     = 0;
+let index_old = 0; 
+let wrong_i = [];
+let right_j = [];
+user_def    = 'definition';
+user_entry  = 'entry';
+let p_i     = Array(dataList.length).fill(1.0 / dataList.length);
+
+
+function selectInd(p_i){
+   let cum_i = p_i.map((sum = 0, n => sum += n));
+   return findInd(Math.random()*cum_i[cum_i.length - 1], cum_i);
+};
+
+function findInd(y, x_i){
+    for (let i=0; i < x_i.length; i++){
+        if (x_i[i] >= y) {return i};
+    }
+};
+
+function flipDef(){
+    let x      = user_entry;
+    user_entry = user_def;
+    user_def   = x;
+}
+
+function filterRare(){   
+    let sum = 0.0;
+    let num_nonzero = 0.0;
+    for (let i=0; i<p_i.length; i++)
+        {if (p_i[i]>0) {
+            sum += p_i[i];
+            num_nonzero++;}};
+    let avg = sum / num_nonzero;
+    for (let i = 0; i < dataList.length; i++) {
+        if (p_i[i] < avg) {p_i[i] = 0};
+    }
+};
+
+function filterDay(){
+    let num_days = parseFloat(prompt('Enter number of days:', ''));
+    if (num_days == '') {return};
+    //if (num_days == void) {return};
+    for (let i = 0; i < dataList.length; i++) {
+        let days_diff = (current_utc - dataList[i].utc) / 8.64e7;
+        p_i[i] = 1.0 / Math.exp(days_diff / num_days);
+    }
+};
+
+function myWrong(){
+    //console.log(p_i[index]);
+    p_i[index] = 3.0 * p_i[index];
+    wrong_i.push(index);
+    console.log(p_i[index]);
+    selectWord();
+};
+function myRight(){
+    if (wrong_i.includes(index)){
+        p_i[index] = 0.8 * p_i[index];
+    }
+    else {p_i[index] = 0.1 * p_i[index]};
+    console.log(p_i[index]);
+    
+    selectWord();
+};
+
+function myDefinition(){
+    document.getElementById("definition").innerHTML =  dataList[index][user_def];
+};
+
+function selectWord() {
+    index = selectInd(p_i);
+    if (index_old==index){index = selectInd(p_i)};
+    if (Txt_on) {document.getElementById("entry").innerHTML = dataList[index][user_entry]}
+    else {document.getElementById("entry").innerHTML = '&nbsp;'};
+    document.getElementById("definition").innerHTML = '&nbsp;';
+    speechText(dataList[index][user_entry]);
+    index_old = index;
+};
+
+function myRepeat(){speechText(dataList[index][user_entry]);}
+
+function speechText(txt){
+    var msg = new SpeechSynthesisUtterance();
+    var voices = window.speechSynthesis.getVoices();
+    msg.voice = voices[59]; 
+    msg.volume = 4; // From 0 to 1
+    msg.rate = .7; // From 0.1 to 10
+    //msg.pitch = 2; // From 0 to 2
+    msg.text = txt;
+    msg.lang = 'es';   
+    if (Voice_on) {window.speechSynthesis.speak(msg)};
+};
+
+function flipVoice(){
+    Voice_on = !Voice_on;
+    if (Voice_on) {document.getElementById("voice").innerHTML = 'Voice: on'}
+    else {document.getElementById("voice").innerHTML = 'Voice: off'}
+};
+function flipText(){
+    Txt_on = !Txt_on;
+    if (Txt_on) {document.getElementById("hide").innerHTML = 'Text: on'}
+    else {document.getElementById("hide").innerHTML = 'Text: off'}
+};
+
+function myGrammar(){
+    for (let i = 0; i < dataList.length; i++) {
+        if (!dataList[i].type.includes("rammar")) {p_i[i] = 0;};
+    }
+    console.log(p_i);
+}
+
+function myVocab(){
+    for (let i = 0; i < dataList.length; i++) {
+        if (dataList[i].type.includes("rammar")) {p_i[i] = 0;};
+    }
+    console.log(p_i);
+}
+
+function myShow(){document.getElementById("entry").innerHTML = dataList[index][user_entry]};
+
+function sortInd(toSort) {
+  let array = [];
+  for (var i = 0; i < toSort.length; i++) {
+    array.push([toSort[i], i]);
+  }
+  array.sort(function(left, right) {
+    return left[0] < right[0] ? -1 : 1;
+  });
+
+  let sortIndices = [];
+  for (var j = 0; j < toSort.length; j++) {
+    sortIndices.push(array[j][1]);    
+  }
+  return sortIndices;
+}
+
+function returnTopWords() {
+    let str_ = "Here are the top words:\n\n";
+    ind_i = sortInd(p_i);
+    console.log(ind_i);
+
+    for (let i=0; i<6; i++){
+        str_ += dataList[ind_i[dataList.length - 1 - i]][user_entry] + '\n';
+    }
+    alert(str_);
+}
+
+selectWord();
+
+//console.log(selectInd([.09,5,10,12]));
+function myOptions() {
+let mylist = document.getElementById("myList").options
+let txt = document.getElementById("myList").options[mylist.selectedIndex].text;
+if (txt == 'Filter Rare'){filterRare()};
+if (txt == 'Filter Day'){filterDay()};
+
+if (txt == 'Flip'){console.log(txt);
+;flipDef()};
+if (txt == 'Vocab'){myVocab()};
+if (txt == 'Grammar'){myGrammar()};
+if (txt == 'Voice'){flipVoice()};
+if (txt == 'Text'){flipText()};
+if (txt == 'Top Words'){returnTopWords()};
+}
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+<script src="data.js"></script>
+<html>
+<body>
+
+<h1 id="entry"></h1>
+
+<button onclick="myNext()"><h1>Next</h1></button>
+<button onclick="myDefinition()"><h1>Definition</h1></button>
+<button onclick="myShow()"><h1>Show</h1></button>
+
+<h1 id="definition"></h1>
+<button onclick="myWrong()"><h1 id="wrong">wrong</h1></button>
+<button onclick="myRight()"><h1 id="right">remove</h1></button>
+<p></p>
+<br><br><br>
+<button onclick="filterData()"><p id="filter">Filter</p></button>
+<button onclick="flipDef()"><p id="flip">Flip</p></button>
+<button onclick="loadPage()"><p id="prob">Probability</p></button>
+<button onclick="flipVoice()"><p id="voice">Voice: on</p></button>
+<button onclick="flipText()"><p id="hide">Text: on</p></button>
+
+<script>
+document.getElementById("wrong").style.color = 'red';
+document.getElementById("right").style.color = 'green';
+document.getElementById("filter").style.color = 'black';
+document.getElementById("flip").style.color = 'black';
+document.getElementById("prob").style.color = 'black';
+document.getElementById("voice").style.color = 'black';
+document.getElementById("hide").style.color = 'black';
+
+let Voice_on = true;
+let Txt_on = true;
+let current_utc = Date.now();
+let index=0;
+let wrong_i = [];
+let right_j = [];
+user_def = 'definition';
+user_entry = 'entry';
+
+function arrayRemove(arr, value) { 
+    
+    return arr.filter(function(ele){ 
+        return ele != value; 
+    });
+}
+
+function myDefinition() {
+    document.getElementById("definition").innerHTML =  dataList[index][user_def];
+}
+
+function myWrong() {
+    if (!(wrong_i.includes(index))) {wrong_i.push(index)};
+    right_j = arrayRemove(right_j, index);
+    document.getElementById("wrong").innerHTML = 'wrong: ' + wrong_i.length;
+    myChoice();
+
+}
+
+function myAllWrong() {
+    for (let i = 0; i < dataList.length; i++) {wrong_i.push(i)};
+    document.getElementById("wrong").innerHTML = 'wrong: ' + wrong_i.length;    
+}
+
+function myRight() {
+    if (!(right_j.includes(index))) {right_j.push(index)};
+    wrong_i = arrayRemove(wrong_i, index);
+    document.getElementById("wrong").innerHTML = 'wrong: ' + wrong_i.length;
+    myChoice();   
+}
+
+function myChoice() {
+
+    let prev_ind = index;
+
+    while (prev_ind == index && dataList.length > 1){
+    if (Math.random() > 0.5 && wrong_i.length > 0) {
+        index = wrong_i[Math.floor(Math.random()*wrong_i.length)]    
+    }
+    else {
+        for (let i = 0; i < 10000; i++) {
+            index = Math.floor(Math.random()*dataList.length);
+            if (!(wrong_i.includes(index)) && !(right_j.includes(index))) {break};
+        }
+    };
+    };
+
+    if (right_j.includes(index)) {
+        if (wrong_i.length ==0){
+        document.getElementById("entry").innerHTML = 'No Entries Found!';
+        document.getElementById("definition").innerHTML = '';}
+        else {
+            index = wrong_i[Math.floor(Math.random()*wrong_i.length)];
+            document.getElementById("entry").innerHTML = dataList[index][user_entry];
+            document.getElementById("definition").innerHTML = '';
+        };
+    }
+    else {
+        document.getElementById("entry").innerHTML = dataList[index][user_entry];
+        document.getElementById("definition").innerHTML = '';
+    };
+
+    if (!Txt_on) { document.getElementById("entry").innerHTML = '';};
+
+    speechText(dataList[index][user_entry]);
+//console.log(wrong_i);
+//console.log(right_j);
+
+}
+
+function myNext() {
+
+    wrong_i = arrayRemove(wrong_i, index); 
+    document.getElementById("wrong").innerHTML = 'wrong: ' + wrong_i.length;
+    myChoice();    
+}
+
+function loadPage() {
+     window.location="prob.html";
+}
+
+function filterData() {
+    let value = parseFloat(prompt('Enter number of days:', ''));
+    if (value == '') {return};
+    let cutoff = value*8.64e7;
+    for (let i = 0; i < dataList.length; i++) {
+        if (current_utc - dataList[i].utc > cutoff ){
+            if (!(right_j.includes(i))) {right_j.push(i)} 
+        }
+    }
+}
+
+function flipDef(){
+    let x      = user_entry;
+    user_entry = user_def;
+    user_def   = x;
+}
+
+function speechText(txt){
+    var msg = new SpeechSynthesisUtterance();
+    var voices = window.speechSynthesis.getVoices();
+    msg.voice = voices[59]; 
+    msg.volume = 4; // From 0 to 1
+    msg.rate = .7; // From 0.1 to 10
+    //msg.pitch = 2; // From 0 to 2
+    msg.text = txt;
+    msg.lang = 'es';   
+    if (Voice_on) {window.speechSynthesis.speak(msg)};
+};
+
+function flipVoice(){
+    Voice_on = !Voice_on;
+    if (Voice_on) {document.getElementById("voice").innerHTML = 'Voice: on'}
+    else {document.getElementById("voice").innerHTML = 'Voice: off'}
+};
+function flipText(){
+    Txt_on = !Txt_on;
+    if (Txt_on) {document.getElementById("hide").innerHTML = 'Text: on'}
+    else {document.getElementById("hide").innerHTML = 'Text: off'}
+};
+
+function myShow(){document.getElementById("entry").innerHTML = dataList[index][user_entry]};
+
+myAllWrong();
+myNext();
+
+</script>
+
+</body>
+</html>

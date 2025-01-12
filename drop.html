@@ -1,0 +1,25 @@
+<html>
+<head>
+<title>dropdown menu using select tab</title>
+</head>
+<script>
+function favTutorial() {
+var mylist = document.getElementById("myList");
+document.getElementById("favourite").value = mylist.options[mylist.selectedIndex].text;
+}
+</script>
+
+<body>
+<form>
+<select id = "myList" onchange = "favTutorial()" >
+<option> options </option>
+<option> w3schools </option>
+<option> Javatpoint </option>
+<option> tutorialspoint </option>
+<option> geeksforgeeks </option>
+</select>
+<p> Your selected tutorial site is: 
+<input type = "text" id = "favourite" size = "20" </p>
+</form>
+</body>
+</html>

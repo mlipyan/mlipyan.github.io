@@ -1,7 +1,42 @@
 <!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+<script src="data.js"></script>
 <html>
+
+<script src="/socket.io/socket.io.js"></script>
+
 <body>
-<h1>Hello World</h1>
-<p>I'm hosted with GitHub Pages.</p>
+
+<button onclick="loadPage()"><h1>Practice</h1></button>
+<p></p>
+<button onclick="myFunction()"><h1>New Entry</h1></button>
+<p></p>
+<button onclick="uploadData()"><p>Upload Data</p></button>
+
+<p id="demo"></p>
+
+<script>
+var socket = io();  
+
+function myFunction() {      
+    data = {};
+    data.entry = prompt('Entry:');
+    data.definition = prompt('Definition');
+    data.type = prompt('Type');
+    data.utc = Date.now();
+    if ((data.entry != null) && (data.entry !='')) {socket.emit('submit', data)};
+}
+
+function loadPage() {
+     window.location="practice.html";
+}
+
+function uploadData() {
+    socket.emit('upload', {});
+}
+
+socket.on('recieved', (newData) => {alert('added: ' + newData)});
+</script>
+
 </body>
 </html>
